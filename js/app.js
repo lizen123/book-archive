@@ -1,116 +1,63 @@
-
-
-/* -----------------------------------------------------
-             Book Archive JavaScript code start
--------------------------------------------------------*/
-
-
-// for styling toggle the loading indicator
-const toggleSpinner = displayStyle => {
-    document.getElementById('spinner').style.display = displayStyle;
-}
-
-// for styling toggle the book result area
-const toggleSearchResult = displayStyle => {
-    document.getElementById('search-result').style.display = displayStyle;
-}
-
-let errorMessage = document.getElementById('searchResultMessage');
-
-// book search function
-const searchBook = () => {
-
-
-    // get input text
-    const inputValueText = document.getElementById("input-value");
-    const inputValue = inputValueText.value;
-    console.log(inputValue);
-
-
-    // input field Error handle Message();
-    if (inputValue == "") {
-        errorMessage.innerHTML = `<h1 class="text-danger">please input first!</h1>`
+// event handaler and Load Data
+const searchButton = () => {
+    const searchInput = document.getElementById('search-field');
+    const searchText = searchInput.value;
+    //clear input field
+    searchInput.value = '';
+    //clear previous results
+    document.getElementById('booksContainer').textContent = '';
+    //clear previous total number of found results
+    document.getElementById('total-results').textContent = '';
+  
+    //empty field validation
+    const emptyField = document.getElementById('empty-field');
+    emptyField.innerText = `*Field Is Empty Please Write somehing!!`;
+    if (searchText === '') {
+      emptyField.style.display = 'block'
+    } else {
+      emptyField.style.display = 'none'
+      const url = `https://openlibrary.org/search.json?q=${searchText}`;
+      fetch(url)
+        .then(response => response.json())
+        .then(data => displayBook(data.docs));
+  
     }
-
-    // fetching the data from the server
-    else {
-        const url = `https://openlibrary.org/search.json?q=${inputValue}`;
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => displaySearchResult(data.docs))
-
-        // toggle spinner and search result data
-        toggleSpinner('block');
-        toggleSearchResult('none');
-
-        // clear previous search input value
-        inputValueText.value = '';
-    }
-
-}
-
-
-// display books data
-const displaySearchResult = async docs => {
-
-    const total = docs.length;
-
-    // search result response 
-    document.getElementById("searchResultMessage").innerHTML = `
-        <h1>${total} results founds! </h1>
-        ` ;
-
-    if (total == 0 || null) {
-
-        document.getElementById("searchResultMessage").innerHTML = `
-            <h1 class="text-danger">no result found!</h1>
-            <img src="../images/no-book-found.png" class="img-fluid" alt="no-book-found" />
-        ` ;
-
-    }
-
-
-    const searchResult = document.getElementById("search-result");
-
-    // clear all previous search results
-    searchResult.textContent = '';
-
-    // looping the api data
-    docs.forEach(doc => {
-        console.log(doc);
-        const div = document.createElement("div");
-        div.classList.add('col');
+  
+  }
+  
+  // Display Book Results
+  const displayBook = books => {
+    const filterBooks = books.filter(info => info.cover_i !== undefined && info.author_name !== undefined && info.first_publish_year !== undefined && info.publisher !== undefined);
+  
+    const totalFoundResults = document.getElementById('total-results')
+  
+    //results found or not validation
+    if (filterBooks.length === 0) {
+      totalFoundResults.innerText = " No Results Found";
+    } else {
+      totalFoundResults.innerText = `You Have ${filterBooks.length} Results found`;
+      const booksDiv = document.getElementById('booksContainer');
+      filterBooks.slice(0, 20).forEach(filterBook => {
+  
+        const div = document.createElement('div')
+        booksDiv.classList.add('col')
         div.innerHTML = `
-            
-            <div class="card h-100">
-            <img src="https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg" class="card-img-top w-50 mx-auto p-3" alt="${doc.title} cover">
-            <div class="card-body fw-bold">
-              <h5 class="card-title fw-bold">Book Name: ${doc.title}</h5>
-                <p class="card-text">
-                    Author Name: by ${doc.author_name}
-                </p>
-            <p>First publish date: ${doc.publish_date}</p>
-            </div>
-            
-          </div>
-            
-          `
-            ;
-        searchResult.appendChild(div);
-    });
-
-    toggleSpinner('none');
-    toggleSearchResult('block');
-
-}
-
-
-// reloadPage function
-const reloadPage = () => {
-    window.location.reload();
-}
-
-/* -----------------------------------------------------
-             Book Archive JavaScript code end
--------------------------------------------------------*/
+           <div class="card h-50">
+           <img style="height:300px;" src="https://covers.openlibrary.org/b/id/${filterBook.cover_i}-M.jpg" class="card-img-top" alt="...">
+           <div class="card-body">
+             <h3 class="card-title text-primary">${filterBook.title}</h3>
+             <h5 class="card-title text-danger">By ${filterBook.author_name[0]}</h5>
+             <h6 class="card-title">First Published:${filterBook.first_publish_year} </h6>
+             <h6 class="card-title">Publisher:${filterBook.publisher[0]} </h6>
+  
+           </div>
+         </div>
+           
+           `;
+        booksDiv.appendChild(div);
+  
+      })
+  
+    }
+  }
+  
